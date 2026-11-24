@@ -5138,4 +5138,13 @@ BEGIN
     IDS_SETUP_END_RETRY "結束處理程序並重試"
     IDS_SETUP_END_CONFIRM "將結束清單中可核驗的占用處理程序，未儲存的內容可能遺失。請先儲存工作。是否繼續？"
     IDS_SETUP_END_FAILED "部分處理程序未能結束，請查看安裝記錄或手動結束後重試。"
+    IDS_SETTINGS_RESCAN_INTERVAL "定期重新掃描"
+    IDS_SETTINGS_RESCAN_NEVER "從不"
+    IDS_SETTINGS_RESCAN_30_MINUTES "30 分鐘"
+    IDS_SETTINGS_RESCAN_2_HOURS "2 小時"
+    IDS_SETTINGS_RESCAN_4_HOURS "4 小時"
+    IDS_SETTINGS_RESCAN_CUSTOM "自訂"
+    IDS_SETTINGS_RESCAN_HOUR "小時"
+    IDS_SETTINGS_RESCAN_MINUTE "分鐘"
+    IDS_SETTINGS_RESCAN_HELP "即時變更仍會持續更新；此設定控制完整重新掃描。"
 END

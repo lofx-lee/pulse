@@ -413,6 +413,10 @@ void IndexClient::HandleVolumes(const uint8_t* p, size_t n) {
         if (system_known) system_paths.push_back(std::move(path_value));
     }
     if (!system_known) { groups.clear(); system_paths.clear(); }
+    uint32_t rescan_minutes = 0, daily_minute = 0;
+    const bool rescan_known = system_known && r.GetU32(rescan_minutes) && r.GetU32(daily_minute) &&
+        (rescan_minutes == 0 || rescan_minutes == 30 || rescan_minutes == 120 ||
+         rescan_minutes == 240 || rescan_minutes == 1440) && daily_minute < 1440;
     {
         std::lock_guard<std::mutex> lock(mu_);
         service_mode_ = service != 0;
@@ -423,6 +427,9 @@ void IndexClient::HandleVolumes(const uint8_t* p, size_t n) {
         exclude_system_ = system_known && (system_flags & 1u) != 0;
         system_groups_ = std::move(groups);
         system_paths_ = std::move(system_paths);
+        rescan_known_ = rescan_known;
+        rescan_minutes_ = rescan_known ? rescan_minutes : 0;
+        daily_minute_ = rescan_known ? daily_minute : 0;
         scope_ready_ = true;
     }
     if (notify_ && status_msg_) PostMessageW(notify_, status_msg_, 0, 0);
@@ -589,6 +596,14 @@ bool IndexClient::SystemExclusion(bool& enabled, std::vector<std::wstring>& grou
     return true;
 }
 
+bool IndexClient::RescanSchedule(uint32_t& minutes, uint32_t& daily_minute) const {
+    std::lock_guard<std::mutex> lock(mu_);
+    if (!rescan_known_) return false;
+    minutes = rescan_minutes_;
+    daily_minute = daily_minute_;
+    return true;
+}
+
 void IndexClient::RefreshVolumesAsync() {
     {
         std::lock_guard<std::mutex> lock(mu_);
@@ -722,6 +737,11 @@ bool IndexClient::ConfigureExcludePathElevated(const std::wstring& path, bool en
 bool IndexClient::ConfigureSystemExclusionElevated(const std::wstring& group, bool enabled) {
     return RunElevatedIndexCommand(ExePath(), L"--configure-system-exclusion " + QuoteCommandArg(group) +
                                    (enabled ? L" --enable" : L" --disable"));
+}
+
+bool IndexClient::ConfigureRescanScheduleElevated(uint32_t minutes, uint32_t daily_minute) {
+    return RunElevatedIndexCommand(ExePath(), L"--configure-rescan " + std::to_wstring(minutes) +
+                                   L" " + std::to_wstring(daily_minute));
 }
 
 bool IndexClient::ExportDiagnosticsElevated(const std::wstring& empty_directory, bool include_dumps) {

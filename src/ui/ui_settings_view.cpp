@@ -369,6 +369,83 @@ void MainRenderer::DrawSettings(const WindowViewModel& vm, const D2D1_RECT_F& re
                      lay.index_status.left + 16.0f * scale_, lay.index_status.top + 40.0f * scale_,
                      lay.index_status.right - lay.index_status.left - 32.0f * scale_, 24.0f * scale_);
 
+        if (vm.settings_rescan_known) {
+            draw_card(lay.index_rescan_card);
+            MakeBrush(dc, theme.text, brText_);
+            DrawTextRect(dc, compositor_->TextFormat(), brText_.get(),
+                         pulse::l10n::Get(pulse::l10n::StringId::SettingsRescanInterval),
+                         lay.index_rescan_card.left + 16.0f * scale_, lay.index_rescan_card.top + 8.0f * scale_,
+                         lay.index_rescan_card.right - lay.index_rescan_card.left - 32.0f * scale_, 22.0f * scale_);
+            MakeBrush(dc, theme.text_secondary, brTextSecondary_);
+            painter_.DrawWrappedCaption(
+                pulse::l10n::Get(pulse::l10n::StringId::SettingsRescanHelp).c_str(),
+                D2D1::Point2F(lay.index_rescan_card.left + 16.0f * scale_,
+                              lay.index_rescan_card.top + 31.0f * scale_),
+                lay.index_rescan_card.right - lay.index_rescan_card.left - 32.0f * scale_,
+                theme.text_secondary);
+            static constexpr pulse::l10n::StringId labels[] = {
+                pulse::l10n::StringId::SettingsRescanNever,
+                pulse::l10n::StringId::SettingsRescan30Minutes,
+                pulse::l10n::StringId::SettingsRescan2Hours,
+                pulse::l10n::StringId::SettingsRescan4Hours,
+                pulse::l10n::StringId::SettingsRescanCustom,
+            };
+            const int selected = vm.settings_rescan_minutes == 30 ? 1 :
+                vm.settings_rescan_minutes == 120 ? 2 : vm.settings_rescan_minutes == 240 ? 3 :
+                vm.settings_rescan_minutes == 1440 ? 4 : 0;
+            const bool narrow = lay.index_rescan_choice[3].top > lay.index_rescan_choice[0].top;
+            painter_.DrawSegmentedTrack(D2D1::RectF(lay.index_rescan_choice[0].left,
+                lay.index_rescan_choice[0].top, lay.index_rescan_choice[narrow ? 2 : 4].right,
+                lay.index_rescan_choice[0].bottom));
+            if (narrow) painter_.DrawSegmentedTrack(D2D1::RectF(lay.index_rescan_choice[3].left,
+                lay.index_rescan_choice[3].top, lay.index_rescan_choice[4].right,
+                lay.index_rescan_choice[4].bottom));
+            for (int i = 0; i < 5; ++i) {
+                fluent::SegmentedItemSpec segment;
+                segment.bounds = lay.index_rescan_choice[i];
+                segment.shared_track = true;
+                segment.text = pulse::l10n::Get(labels[i]);
+                const int first = narrow && i >= 3 ? 3 : 0;
+                const int last = narrow ? (i >= 3 ? 4 : 2) : 4;
+                segment.position = i == first ? fluent::SegmentPosition::First
+                    : i == last ? fluent::SegmentPosition::Last : fluent::SegmentPosition::Middle;
+                segment.state.selected = selected == i;
+                segment.state.enabled = vm.settings_index_service && !vm.settings_rescan_busy;
+                segment.state.hovered = segment.state.enabled &&
+                    IsHovered(vm, HitTestResult::SettingsRescanAction, i);
+                painter_.DrawSegmentedItem(segment);
+            }
+            if (selected == 4) {
+                const auto two_digits = [](uint32_t value) {
+                    return (value < 10 ? L"0" : L"") + std::to_wstring(value);
+                };
+                const std::wstring hour = two_digits(vm.settings_rescan_daily_minute / 60);
+                const std::wstring minute = two_digits(vm.settings_rescan_daily_minute % 60);
+                for (int i = 0; i < 4; ++i) {
+                    fluent::ControlState state{};
+                    state.enabled = vm.settings_index_service && !vm.settings_rescan_busy;
+                    state.hovered = state.enabled && IsHovered(vm, HitTestResult::SettingsRescanAction, i + 5);
+                    painter_.DrawButton({lay.index_rescan_step[i], i % 2 ? L"+" : L"-", {},
+                                         fluent::ButtonKind::Standard, state});
+                }
+                MakeBrush(dc, theme.text, brText_);
+                DrawTextRect(dc, compositor_->TextFormat(), brText_.get(), hour,
+                    lay.index_rescan_step[0].right + 3.0f * scale_, lay.index_rescan_step[0].top + 5.0f * scale_,
+                    40.0f * scale_, 22.0f * scale_);
+                DrawTextRect(dc, compositor_->TextFormat(), brText_.get(), L":",
+                    lay.index_rescan_step[1].right + 5.0f * scale_, lay.index_rescan_step[1].top + 5.0f * scale_,
+                    14.0f * scale_, 22.0f * scale_);
+                DrawTextRect(dc, compositor_->TextFormat(), brText_.get(), minute,
+                    lay.index_rescan_step[2].right + 3.0f * scale_, lay.index_rescan_step[2].top + 5.0f * scale_,
+                    40.0f * scale_, 22.0f * scale_);
+                fluent::ControlState save{};
+                save.enabled = vm.settings_index_service && !vm.settings_rescan_busy;
+                save.hovered = save.enabled && IsHovered(vm, HitTestResult::SettingsRescanAction, 9);
+                painter_.DrawButton({lay.index_rescan_save,
+                    pulse::l10n::Get(pulse::l10n::StringId::Save), {}, fluent::ButtonKind::Primary, save});
+            }
+        }
+
         draw_card(lay.index_path);
         MakeBrush(dc, theme.text, brText_);
         DrawTextRect(dc, compositor_->TextFormat(), brText_.get(),

@@ -38,6 +38,7 @@ public:
     bool GetScope(std::vector<VolumeInfo>& volumes, std::vector<std::wstring>& excluded) const;
     // False until a service that reports the system folder switch answers.
     bool SystemExclusion(bool& enabled, std::vector<std::wstring>& groups) const;
+    bool RescanSchedule(uint32_t& minutes, uint32_t& daily_minute) const;
     void RefreshVolumesAsync();
     bool RequestConfigureVolume(const std::wstring& volume_id, bool enabled);
     bool RequestRebuild();
@@ -47,6 +48,7 @@ public:
     static bool ConfigureIndexPathElevated(const std::wstring& path, std::wstring* error = nullptr);
     static bool ConfigureExcludePathElevated(const std::wstring& path, bool enabled);
     static bool ConfigureSystemExclusionElevated(const std::wstring& group, bool enabled);
+    static bool ConfigureRescanScheduleElevated(uint32_t minutes, uint32_t daily_minute);
     static bool ExportDiagnosticsElevated(const std::wstring& empty_directory, bool include_dumps = false);
     // Search master switch, no elevation: a running service records it and
     // stops (purge also empties its index folder); a stopped one is started
@@ -108,6 +110,9 @@ private:
     bool exclude_system_ = false;
     std::vector<std::wstring> system_groups_;
     std::vector<std::wstring> system_paths_;
+    bool rescan_known_ = false;
+    uint32_t rescan_minutes_ = 0;
+    uint32_t daily_minute_ = 0;
     uint32_t result_id_ = 0;
     SearchResult result_;
     std::mutex pipe_mu_;

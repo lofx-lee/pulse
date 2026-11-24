@@ -5158,5 +5158,14 @@
 #define IDS_SETUP_END_RETRY                                                              6436
 #define IDS_SETUP_END_CONFIRM                                                            6437
 #define IDS_SETUP_END_FAILED                                                             6438
+#define IDS_SETTINGS_RESCAN_INTERVAL                                                     6439
+#define IDS_SETTINGS_RESCAN_NEVER                                                        6440
+#define IDS_SETTINGS_RESCAN_30_MINUTES                                                   6441
+#define IDS_SETTINGS_RESCAN_2_HOURS                                                      6442
+#define IDS_SETTINGS_RESCAN_4_HOURS                                                      6443
+#define IDS_SETTINGS_RESCAN_CUSTOM                                                       6444
+#define IDS_SETTINGS_RESCAN_HOUR                                                         6445
+#define IDS_SETTINGS_RESCAN_MINUTE                                                       6446
+#define IDS_SETTINGS_RESCAN_HELP                                                         6447
 
 #endif  // PULSE_STRING_IDS_H

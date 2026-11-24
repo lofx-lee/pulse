@@ -5140,6 +5140,15 @@ BEGIN
     IDS_SETUP_END_RETRY "结束进程并重试"
     IDS_SETUP_END_CONFIRM "将结束列表中可核验的占用进程，未保存的内容可能丢失。请先保存工作。是否继续？"
     IDS_SETUP_END_FAILED "部分进程未能结束，请查看安装日志或手动退出后重试。"
+    IDS_SETTINGS_RESCAN_INTERVAL "定期重扫"
+    IDS_SETTINGS_RESCAN_NEVER "从不"
+    IDS_SETTINGS_RESCAN_30_MINUTES "30 分钟"
+    IDS_SETTINGS_RESCAN_2_HOURS "2 小时"
+    IDS_SETTINGS_RESCAN_4_HOURS "4 小时"
+    IDS_SETTINGS_RESCAN_CUSTOM "自定义"
+    IDS_SETTINGS_RESCAN_HOUR "小时"
+    IDS_SETTINGS_RESCAN_MINUTE "分钟"
+    IDS_SETTINGS_RESCAN_HELP "实时变更仍会持续更新；此设置控制全量重扫。"
 END
 
 LANGUAGE 0x09, 0x01
@@ -10279,6 +10288,15 @@ BEGIN
     IDS_SETUP_END_RETRY "End processes and retry"
     IDS_SETUP_END_CONFIRM "End the verified processes in this list? Unsaved work may be lost. Save your work before continuing."
     IDS_SETUP_END_FAILED "Some processes could not be ended. Check the setup log or quit them manually and retry."
+    IDS_SETTINGS_RESCAN_INTERVAL "Scheduled full rescan"
+    IDS_SETTINGS_RESCAN_NEVER "Never"
+    IDS_SETTINGS_RESCAN_30_MINUTES "30 minutes"
+    IDS_SETTINGS_RESCAN_2_HOURS "2 hours"
+    IDS_SETTINGS_RESCAN_4_HOURS "4 hours"
+    IDS_SETTINGS_RESCAN_CUSTOM "Daily at time"
+    IDS_SETTINGS_RESCAN_HOUR "Hour"
+    IDS_SETTINGS_RESCAN_MINUTE "Minute"
+    IDS_SETTINGS_RESCAN_HELP "Live changes continue to update; this controls full rescans."
 END
 
 // Traditional Chinese (Taiwan), generated from the Simplified entries above.

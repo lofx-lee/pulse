@@ -165,6 +165,45 @@ SettingsLayout MakeSettingsLayout(const WindowViewModel& vm, const D2D1_RECT_F& 
         y += 70.0f * scale;
         l.index_status = D2D1::RectF(card_left, y, card_right, y + 82.0f * scale);
         y += 94.0f * scale;
+        if (vm.settings_rescan_known) {
+            const bool narrow = card_right - card_left < 620.0f * scale;
+            const bool custom = vm.settings_rescan_minutes == 1440;
+            const float choices_width = card_right - card_left - 32.0f * scale;
+            const auto& help = pulse::l10n::Get(pulse::l10n::StringId::SettingsRescanHelp);
+            const float help_h = painter ? painter->MeasureWrappedCaptionHeight(help, choices_width)
+                                         : 36.0f * scale;
+            const float header_h = (std::max)(57.0f * scale, 31.0f * scale + help_h + 8.0f * scale);
+            const float choices_top = y + header_h;
+            const float row_h = narrow ? 72.0f : 32.0f;
+            const bool stack_save = card_right - card_left < 400.0f * scale;
+            const float card_h = (custom ? 176.0f : 126.0f) + (narrow ? 40.0f : 0.0f) +
+                (custom && stack_save ? 40.0f : 0.0f);
+            const float total_h = card_h * scale + header_h - 57.0f * scale;
+            l.index_rescan_card = D2D1::RectF(card_left, y, card_right, y + total_h);
+            for (int i = 0; i < 5; ++i) {
+                const int column = narrow && i >= 3 ? i - 3 : i;
+                const int columns = narrow ? (i >= 3 ? 2 : 3) : 5;
+                const float top = choices_top + (narrow && i >= 3 ? 40.0f * scale : 0);
+                l.index_rescan_choice[i] = D2D1::RectF(card_left + 16.0f * scale +
+                    choices_width * column / columns, top,
+                    card_left + 16.0f * scale + choices_width * (column + 1) / columns,
+                    top + 32.0f * scale);
+            }
+            if (custom) {
+                const float top = choices_top + row_h * scale + 12.0f * scale;
+                const float left = card_left + 16.0f * scale;
+                for (int i = 0; i < 4; ++i) {
+                    const float x = left + (i >= 2 ? 130.0f : 0.0f) * scale +
+                        (i % 2 ? 76.0f : 0.0f) * scale;
+                    l.index_rescan_step[i] = D2D1::RectF(x, top, x + 30.0f * scale, top + 32.0f * scale);
+                }
+                const float save_w = label_btn_w(pulse::l10n::Get(pulse::l10n::StringId::Save));
+                const float save_top = top + (stack_save ? 40.0f * scale : 0.0f);
+                l.index_rescan_save = D2D1::RectF(card_right - 16.0f * scale - save_w, save_top,
+                                                   card_right - 16.0f * scale, save_top + 32.0f * scale);
+            }
+            y += total_h + 12.0f * scale;
+        }
         const std::wstring index_actions[] = {
             pulse::l10n::Get(pulse::l10n::StringId::Rebuild),
             pulse::l10n::Get(pulse::l10n::StringId::OpenLocation),

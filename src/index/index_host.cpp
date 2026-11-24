@@ -361,6 +361,8 @@ std::vector<uint8_t> VolumesPayload() {
         const auto system_paths = SystemExclusionPaths(config);
         w.PutU32(static_cast<uint32_t>(system_paths.size()));
         for (const auto& path : system_paths) w.PutString(path);
+        w.PutU32(config.rescan_minutes);
+        w.PutU32(config.daily_minute);
     } else {
         w.PutU32(0);
     }
@@ -1390,11 +1392,18 @@ int ConfigureCommand(const std::vector<std::wstring>& args) {
         const bool disabled = args.size() >= 4 && args[3] == L"--disable";
         if (!enabled && !disabled) return ERROR_INVALID_PARAMETER;
         ok = ConfigureSystemExclusion(args[2], enabled, &error);
+    } else if (args.size() == 4 && args[1] == L"--configure-rescan") {
+        wchar_t* end = nullptr;
+        const unsigned long minutes = wcstoul(args[2].c_str(), &end, 10);
+        if (end == args[2].c_str() || *end) return ERROR_INVALID_PARAMETER;
+        const unsigned long daily = wcstoul(args[3].c_str(), &end, 10);
+        if (end == args[3].c_str() || *end) return ERROR_INVALID_PARAMETER;
+        ok = ConfigureRescanSchedule(minutes, daily, &error);
     } else if (args.size() >= 2 && args[1] == L"--rebuild-index") {
         ok = true;
     }
     if (!ok) return ERROR_INVALID_DATA;
-    ReloadService();
+    if (args[1] != L"--configure-rescan") ReloadService();
     return 0;
 }
 
@@ -1479,6 +1488,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     if (a1 == L"--export-diagnostics") return ExportDiagnosticsCommand(args);
     if (a1 == L"--configure-volume" || a1 == L"--set-index-path" ||
         a1 == L"--configure-exclude" || a1 == L"--configure-system-exclusion" ||
+        a1 == L"--configure-rescan" ||
         a1 == L"--rebuild-index") return ConfigureCommand(args);
     if (a1 == L"--service") {
         SERVICE_TABLE_ENTRYW table[] = {

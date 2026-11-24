@@ -691,6 +691,18 @@ HitTestResult MainRenderer::HitTest(const WindowViewModel& vm, const D2D1_RECT_F
                         return r;
                     }
                 }
+                if (vm.settings_index_service && vm.settings_rescan_known &&
+                    !vm.settings_rescan_busy) {
+                    for (int i = 0; i < 5; ++i) if (ContainsPt(lay.index_rescan_choice[i], x, y)) {
+                        r.region = HitTestResult::SettingsRescanAction; r.index = i; return r;
+                    }
+                    for (int i = 0; i < 4; ++i) if (ContainsPt(lay.index_rescan_step[i], x, y)) {
+                        r.region = HitTestResult::SettingsRescanAction; r.index = i + 5; return r;
+                    }
+                    if (ContainsPt(lay.index_rescan_save, x, y)) {
+                        r.region = HitTestResult::SettingsRescanAction; r.index = 9; return r;
+                    }
+                }
                 for (size_t i = 0; i < lay.index_volume_rows.size(); ++i) {
                     if (ContainsPt(lay.index_volume_rows[i], x, y)) {
                         r.region = HitTestResult::SettingsIndexVolume;

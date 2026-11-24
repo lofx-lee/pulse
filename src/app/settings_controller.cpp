@@ -676,6 +676,9 @@ bool SettingsController::StartUiTask(SettingsTask task) {
             return index::IndexClient::ConfigureExcludePathElevated(value.path, value.enabled);
         case SettingsTaskKind::SystemExclusion:
             return index::IndexClient::ConfigureSystemExclusionElevated(value.key, value.enabled);
+        case SettingsTaskKind::RescanSchedule:
+            return index::IndexClient::ConfigureRescanScheduleElevated(
+                static_cast<uint32_t>(std::stoul(value.key)), static_cast<uint32_t>(std::stoul(value.path)));
         case SettingsTaskKind::InstallService: {
             DWORD code = 0;
             if (index::IndexClient::InstallServiceElevated(&code)) return true;
@@ -722,6 +725,7 @@ SettingsTaskEffect SettingsController::CompleteTask(const SettingsTaskResult& re
     if (result.task.kind == SettingsTaskKind::ConfigureIndexPath) effect.refresh_index = true;
     if (result.ok) {
         error_.clear();
+        if (result.task.kind == SettingsTaskKind::RescanSchedule) rescan_waiting_sync_ = true;
         if (result.task.kind == SettingsTaskKind::NetworkAdd && result.task.pin)
             effect.pin_network = result.task.path;
         if (result.task.kind == SettingsTaskKind::DiagnosticsExport)
@@ -1583,6 +1587,61 @@ void SettingsController::IndexAction(int action) {
                    : SettingsTaskKind::InstallService};
     task.path = std::move(path);
     StartUiTask(std::move(task));
+}
+
+bool SettingsController::RescanDraft(uint32_t& minutes, uint32_t& daily_minute) {
+    if (rescan_waiting_sync_ && index_) {
+        uint32_t current_minutes = 0, current_daily = 0;
+        if (index_->RescanSchedule(current_minutes, current_daily) &&
+            current_minutes == rescan_draft_minutes_ && current_daily == rescan_draft_daily_) {
+            rescan_waiting_sync_ = false;
+            rescan_editing_ = false;
+        }
+    }
+    if (rescan_editing_) {
+        minutes = rescan_draft_minutes_;
+        daily_minute = rescan_draft_daily_;
+        return true;
+    }
+    return index_ && index_->RescanSchedule(minutes, daily_minute);
+}
+
+bool SettingsController::RescanBusy() const {
+    std::lock_guard<std::mutex> lock(task_state_->mutex);
+    return task_state_->local_pending;
+}
+
+void SettingsController::RescanAction(int action) {
+    if (!index_ || !index_->ServiceMode() || !ui_.task_completion || RescanBusy()) return;
+    uint32_t minutes = 0, daily_minute = 0;
+    if (!RescanDraft(minutes, daily_minute)) return;
+    if (action >= 0 && action < 5) {
+        static constexpr uint32_t choices[] = {0, 30, 120, 240, 1440};
+        minutes = choices[action];
+    } else if (action == 5) daily_minute = (daily_minute + 23 * 60) % 1440;
+    else if (action == 6) daily_minute = (daily_minute + 60) % 1440;
+    else if (action == 7) daily_minute = (daily_minute / 60) * 60 + (daily_minute + 59) % 60;
+    else if (action == 8) daily_minute = (daily_minute / 60) * 60 + (daily_minute + 1) % 60;
+    else if (action != 9) return;
+    const bool was_editing = rescan_editing_;
+    const bool was_waiting_sync = rescan_waiting_sync_;
+    const uint32_t old_minutes = rescan_draft_minutes_;
+    const uint32_t old_daily = rescan_draft_daily_;
+    rescan_editing_ = true;
+    rescan_waiting_sync_ = false;
+    rescan_draft_minutes_ = minutes;
+    rescan_draft_daily_ = daily_minute;
+    if (action >= 4 && action != 9) return;
+    SettingsTask task{SettingsTaskKind::RescanSchedule};
+    task.key = std::to_wstring(minutes);
+    task.path = std::to_wstring(daily_minute);
+    ClearError();
+    if (!StartUiTask(std::move(task))) {
+        rescan_editing_ = was_editing;
+        rescan_waiting_sync_ = was_waiting_sync;
+        rescan_draft_minutes_ = old_minutes;
+        rescan_draft_daily_ = old_daily;
+    }
 }
 
 // The network agent indexes server shares only. This check makes no network

@@ -4184,6 +4184,32 @@ void Engine::Worker() {
     last_merge_tick_ = GetTickCount64();
     auto online = initial_drives;
     auto topology_tick = GetTickCount64();
+    uint32_t rescan_minutes = MachineIndexScope() ? startup_config.rescan_minutes : 0;
+    uint32_t daily_minute = startup_config.daily_minute;
+    ULONGLONG next_interval_tick = 0;
+    std::time_t next_daily_time = 0;
+    auto arm_rescan = [&] {
+        next_interval_tick = 0;
+        next_daily_time = 0;
+        if (rescan_minutes == 1440) {
+            std::time_t now = std::time(nullptr);
+            std::tm local{};
+            localtime_s(&local, &now);
+            local.tm_hour = static_cast<int>(daily_minute / 60);
+            local.tm_min = static_cast<int>(daily_minute % 60);
+            local.tm_sec = 0;
+            local.tm_isdst = -1;
+            next_daily_time = std::mktime(&local);
+            if (next_daily_time <= now) {
+                ++local.tm_mday;
+                local.tm_isdst = -1;
+                next_daily_time = std::mktime(&local);
+            }
+        } else if (rescan_minutes) {
+            next_interval_tick = GetTickCount64() + static_cast<ULONGLONG>(rescan_minutes) * 60000;
+        }
+    };
+    arm_rescan();
     StartJournalStreams();
     while (running_) {
         ApplyVolumePauses();
@@ -4205,6 +4231,7 @@ void Engine::Worker() {
             StartJournalStreams();
             last_merge_tick_ = GetTickCount64();
             topology_tick = 0;
+            arm_rescan();
             continue;
         }
         // Clients asked for folder totals: aggregate here, never in a pipe thread
@@ -4218,10 +4245,29 @@ void Engine::Worker() {
         if (fixture_root_.empty() && loop_tick - topology_tick >= 30000) {
             const auto timing = FilenameTiming::Begin();
             IndexConfig topology_config;
-            if (!MachineIndexScope() || LoadMachineConfig(topology_config, nullptr))
+            if (!MachineIndexScope() || LoadMachineConfig(topology_config, nullptr)) {
                 online = ConfiguredVolumes(topology_config);
+                if (MachineIndexScope() &&
+                    (rescan_minutes != topology_config.rescan_minutes || daily_minute != topology_config.daily_minute)) {
+                    rescan_minutes = topology_config.rescan_minutes;
+                    daily_minute = topology_config.daily_minute;
+                    arm_rescan();
+                }
+            }
             topology_tick = loop_tick;
             filename_timing_.End(FilenameStage::Topology, timing, online.size(), ERROR_SUCCESS, "periodic");
+        }
+        if (volume_pauses_.empty() &&
+            ((next_interval_tick && loop_tick >= next_interval_tick) ||
+             (next_daily_time && std::time(nullptr) >= next_daily_time))) {
+            journal_streams_.clear();
+            volume_retry_after_.clear();
+            FullRebuild("scheduled");
+            StartJournalStreams();
+            last_merge_tick_ = GetTickCount64();
+            topology_tick = 0;
+            arm_rescan();
+            continue;
         }
         {
             std::unique_lock<std::shared_mutex> lock(mutex_);

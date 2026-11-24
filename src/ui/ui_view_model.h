@@ -1493,6 +1493,10 @@ struct WindowViewModel {
     bool settings_index_exclude_system = false;
     uint32_t settings_index_system_groups = 0;  // bit i = index::kSystemExclusionGroups[i]
     bool settings_index_system_expanded = false;
+    bool settings_rescan_known = false;
+    bool settings_rescan_busy = false;
+    uint32_t settings_rescan_minutes = 0;
+    uint32_t settings_rescan_daily_minute = 0;
     std::vector<NetworkRootRowView> settings_network_roots;
     std::wstring settings_version;
     std::wstring settings_build_id;
@@ -1687,6 +1691,7 @@ struct HitTestResult {
         SettingsLanguage,
         SettingsIndexVolume,
         SettingsIndexAction,
+        SettingsRescanAction,
         SettingsIndexExcludeAction,
         SettingsIndexExcludeRemove,
         SettingsNetworkAction,

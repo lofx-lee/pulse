@@ -136,6 +136,8 @@ std::wstring ConfigJson(const IndexConfig& config) {
     std::wstring out = L"{\n  \"version\":" + std::to_wstring(config.version) +
                        L",\n  \"generation\":" + std::to_wstring(config.generation) +
                        L",\n  \"search_enabled\":" + (config.search_enabled ? L"true" : L"false") +
+                       L",\n  \"rescan_minutes\":" + std::to_wstring(config.rescan_minutes) +
+                       L",\n  \"daily_minute\":" + std::to_wstring(config.daily_minute) +
                        L",\n  \"include_fixed_ntfs\":" +
                        (config.include_fixed_ntfs ? L"true" : L"false") +
                        L",\n  \"include_removable_ntfs\":" +
@@ -325,6 +327,11 @@ bool LoadIndexConfigFrom(const std::wstring& path, const std::wstring& default_i
     loaded.version = static_cast<uint32_t>((std::max)(1, pulse::json::ExtractInt(json, L"version", 1)));
     loaded.generation = static_cast<uint64_t>((std::max)(1, pulse::json::ExtractInt(json, L"generation", 1)));
     loaded.search_enabled = pulse::json::ExtractBool(json, L"search_enabled", true);
+    const int rescan = pulse::json::ExtractInt(json, L"rescan_minutes", 0);
+    loaded.rescan_minutes = rescan == 30 || rescan == 120 || rescan == 240 || rescan == 1440
+        ? static_cast<uint32_t>(rescan) : 0;
+    const int daily = pulse::json::ExtractInt(json, L"daily_minute", 0);
+    loaded.daily_minute = daily >= 0 && daily < 1440 ? static_cast<uint32_t>(daily) : 0;
     loaded.include_fixed_ntfs = pulse::json::ExtractBool(json, L"include_fixed_ntfs", true);
     loaded.include_removable_ntfs = pulse::json::ExtractBool(json, L"include_removable_ntfs", true);
     loaded.index_path = pulse::json::ExtractString(json, L"index_path", default_index_path);
@@ -485,6 +492,20 @@ bool ConfigureSystemExclusion(const std::wstring& group, bool enabled, std::wstr
         if (enabled && it == config.system_groups.end()) config.system_groups.push_back(group);
         else if (!enabled && it != config.system_groups.end()) config.system_groups.erase(it);
     }
+    ++config.generation;
+    return SaveMachineConfig(config, error);
+}
+
+bool ConfigureRescanSchedule(uint32_t minutes, uint32_t daily_minute, std::wstring* error) {
+    if ((minutes != 0 && minutes != 30 && minutes != 120 && minutes != 240 && minutes != 1440) ||
+        daily_minute >= 1440) {
+        SetError(error, L"无效的索引重扫计划");
+        return false;
+    }
+    IndexConfig config;
+    if (!LoadMachineConfig(config, error)) return false;
+    config.rescan_minutes = minutes;
+    config.daily_minute = daily_minute;
     ++config.generation;
     return SaveMachineConfig(config, error);
 }

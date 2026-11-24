@@ -5150,6 +5150,15 @@ enum class StringId : UINT {
     SetupEndRetry = IDS_SETUP_END_RETRY,
     SetupEndConfirm = IDS_SETUP_END_CONFIRM,
     SetupEndFailed = IDS_SETUP_END_FAILED,
+    SettingsRescanInterval = IDS_SETTINGS_RESCAN_INTERVAL,
+    SettingsRescanNever = IDS_SETTINGS_RESCAN_NEVER,
+    SettingsRescan30Minutes = IDS_SETTINGS_RESCAN_30_MINUTES,
+    SettingsRescan2Hours = IDS_SETTINGS_RESCAN_2_HOURS,
+    SettingsRescan4Hours = IDS_SETTINGS_RESCAN_4_HOURS,
+    SettingsRescanCustom = IDS_SETTINGS_RESCAN_CUSTOM,
+    SettingsRescanHour = IDS_SETTINGS_RESCAN_HOUR,
+    SettingsRescanMinute = IDS_SETTINGS_RESCAN_MINUTE,
+    SettingsRescanHelp = IDS_SETTINGS_RESCAN_HELP,
 };
 
 bool IsLanguageId(std::wstring_view id) noexcept;

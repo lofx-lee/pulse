@@ -63,6 +63,7 @@ enum class SettingsTaskKind : uint8_t {
     NetworkRemove,
     DiagnosticsExport,
     SystemExclusion,
+    RescanSchedule,
     // 备份与迁移 (settings_transfer_ui.h): write a bundle (path, key = category
     // mask) / stage a bundle for the next start (pin: a backup to restore;
     // enabled: restart once staged).
@@ -339,6 +340,9 @@ public:
     void SystemExclusionAction(int action);
     bool system_exclusion_expanded() const noexcept { return system_exclusion_expanded_; }
     void IndexAction(int action);
+    void RescanAction(int action);
+    bool RescanDraft(uint32_t& minutes, uint32_t& daily_minute);
+    bool RescanBusy() const;
     void NetworkAction(int action, bool pin_after_add = false);
     void RemoveNetwork(int index);
     // 0 open, 1 clear, 2 export diagnostics; 3..5 备份与迁移 (export, import,
@@ -365,6 +369,10 @@ private:
 
     bool global_search_capturing_ = false;
     bool system_exclusion_expanded_ = false;
+    bool rescan_editing_ = false;
+    bool rescan_waiting_sync_ = false;
+    uint32_t rescan_draft_minutes_ = 0;
+    uint32_t rescan_draft_daily_ = 0;
     int slider_drag_ = -1;
     int custom_hsl_[3] = {220, 60, 50};
     int menu_drag_item_ = -1;

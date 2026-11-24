@@ -987,6 +987,9 @@ void FillPaneSlots(AppState& s, ui::WindowViewModel& vm) {
             vm.settings_index_error = l10n::ServiceText(s.settings.error());
             vm.settings_index_volumes.clear();
             vm.settings_index_excluded_paths = s.index.ExcludedPaths();
+            vm.settings_rescan_known = s.settings.RescanDraft(
+                vm.settings_rescan_minutes, vm.settings_rescan_daily_minute);
+            vm.settings_rescan_busy = s.settings.RescanBusy();
             {
                 bool exclude_system = false;
                 std::vector<std::wstring> groups;
@@ -3762,6 +3765,12 @@ std::wstring TooltipForHover(AppState& s) {
     case R::SettingsIndexExcludeAction:
         if (s.hoverControlIndex == 1) return text(I::SettingsSystemFoldersTip);
         return s.hoverControlIndex == 0 ? text(I::TooltipAddExclusion) : L"";
+    case R::SettingsRescanAction:
+        if (s.hoverControlIndex >= 5 && s.hoverControlIndex <= 6)
+            return text(I::SettingsRescanHour);
+        if (s.hoverControlIndex >= 7 && s.hoverControlIndex <= 8)
+            return text(I::SettingsRescanMinute);
+        return L"";
     case R::SettingsIndexExcludeRemove: return text(I::TooltipRemoveExclusion);
     case R::SettingsDiagnosticsAction: {
         static constexpr I actions[] = {

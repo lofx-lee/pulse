@@ -46,6 +46,9 @@ struct IndexConfig {
     // Master switch from the app's search setting. Off: the service exits at
     // start (it is still installed) until Pulse starts it with --enable-search.
     bool search_enabled = true;
+    // 0 disables scheduled full rescans; 1440 means once daily at daily_minute.
+    uint32_t rescan_minutes = 0;
+    uint32_t daily_minute = 0;
 
     bool IsExcluded(const std::wstring& id) const;
     bool IsPathExcluded(std::wstring_view path) const;
@@ -82,5 +85,6 @@ bool ConfigureIndexPath(const std::wstring& path, std::wstring* error = nullptr)
 bool ConfigureExcludePath(const std::wstring& path, bool enabled, std::wstring* error = nullptr);
 // group is "all" for the master switch or one of kSystemExclusionGroups.
 bool ConfigureSystemExclusion(const std::wstring& group, bool enabled, std::wstring* error = nullptr);
+bool ConfigureRescanSchedule(uint32_t minutes, uint32_t daily_minute, std::wstring* error = nullptr);
 
 } // namespace pulse::index

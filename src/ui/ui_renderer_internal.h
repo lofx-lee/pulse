@@ -2856,6 +2856,10 @@ struct SettingsLayout {
     D2D1_RECT_F content_index_row{};
     D2D1_RECT_F index_info{};
     D2D1_RECT_F index_status{};
+    D2D1_RECT_F index_rescan_card{};
+    D2D1_RECT_F index_rescan_choice[5]{};
+    D2D1_RECT_F index_rescan_step[4]{};
+    D2D1_RECT_F index_rescan_save{};
     D2D1_RECT_F index_path{};
     D2D1_RECT_F index_action[3]{};
     std::vector<D2D1_RECT_F> index_volume_rows;
